@@ -5,7 +5,7 @@
 from pyrice import templates
 
 
-# ---------- TEST: process_templats ----------
+# ---------- TEST: process_templates ----------
 def test_process_templates_success(tmp_path):
     template_file = tmp_path / "template.colors"
     template_content = "background={{base00}}\nforeground={{base05}}\n"
