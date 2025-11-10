@@ -14,7 +14,7 @@ from pyrice.commands import execute_commands
 
 def main():
     parser = argparse.ArgumentParser(
-        description="pyrice, a tool to handle your base16 powered rice")
+        description="pyrice, a tool to handle your base16 powered ricing")
     parser.add_argument("palette_name", nargs="?",
                         help="palette name, file name without extension")
     parser.add_argument("-l", "--list", action="store_true",
