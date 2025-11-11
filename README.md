@@ -1,4 +1,3 @@
-
 # pyrice
 
 A simple, no-dependencies tool to handle [base16](https://github.com/chriskempson/base16) powered ricing on Linux.
@@ -7,7 +6,7 @@ A simple, no-dependencies tool to handle [base16](https://github.com/chriskempso
 
 ## Overview
 
-**pyrice** is a lightweihgt command-line utility for managing and applying **base16** color palettes across your Linux setup.
+**pyrice** is a lightweight command-line utility for managing and applying **base16** color palettes across your Linux setup.
 It replaces color placeholders like ``{{base00}}`` in template files and can execute post-processing commands after applying a theme.
 
 - No external dependencies (pure Python standard library)
@@ -92,14 +91,16 @@ base0E: "#A3BE8C"
 base0F: "#B48EAD"
 ```
 
-### Example: Template file (`template.colors.yml`)
+### Example: Template file 
+
+Let's assume we have a file `template.colors.yml` properly addressed in the config file:
 
 ```
 colors:
   primary: "{{base00}}"
   accent: "{{base08}}"
 ```
-will produce a new file `colors.yaml`:
+pyrice will produce a new file `colors.yml`:
 ```
 colors:
   primary: "2E3440"
