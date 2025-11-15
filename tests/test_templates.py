@@ -29,21 +29,21 @@ def read():
 def test_process_single_directive(write, read):
     f = write(
         "test.txt",
-        "// <%pyrice:base00:aaaaaa>\n"
+        "// <%pyrice:base00:aaaaaa> <%pyrice:base01:bbbbbb>\n"
         "color = aaaaaa\n"
-        "another_color = aaaaaa\n"
+        "another_color = bbbbbb\n"
     )
 
-    colors = {"base00": "111111"}
+    colors = {"base00": "111111", "base01": "cccccc", "base02": "dddddd"}
 
     errors = process_templates(colors, [str(f)])
     assert errors == []
 
     result = read(f)
 
-    assert result[0] == "// <%pyrice:base00:111111>"
+    assert result[0] == "// <%pyrice:base00:111111> <%pyrice:base01:cccccc>"
     assert result[1] == "color = 111111"
-    assert result[2] == "another_color = aaaaaa"
+    assert result[2] == "another_color = bbbbbb"
 
 
 def test_process_multiple_directives_same_line(write, read):
