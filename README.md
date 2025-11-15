@@ -124,6 +124,13 @@ or
 pyrice -h
 ```
 
+### Show version
+```
+pyrice --version
+or
+pyrice -v
+```
+
 ### List available palettes
 ```
 pyrice --list
