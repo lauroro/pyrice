@@ -3,72 +3,132 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
-from pyrice import templates
+from pyrice.templates import process_templates
 
 
 # ---------- FIXTURES ----------
 @pytest.fixture
-def template_base(tmp_path):
-    file = tmp_path / "template.colors"
-    file.write_text("background={{base00}}\nforeground={{base05}}\n")
-    colors = {"base00": "111111", "base05": "ffffff"}
-    return file, colors
+def write(tmp_path):
+    """Scrive un file all’interno di tmp_path e restituisce il path."""
+    def _write(filename, content):
+        p = tmp_path / filename
+        p.write_text(content)
+        return p
+    return _write
 
 
 @pytest.fixture
-def empty_colors():
-    return {}
+def read():
+    """Legge un file e restituisce una lista di righe."""
+    def _read(path):
+        return path.read_text().splitlines()
+    return _read
 
 
 # ---------- TEST: process_templates ----------
-def test_process_templates_success(template_base):
-    template_file, colors = template_base
+def test_process_single_directive(write, read):
+    f = write(
+        "test.txt",
+        "// <%pyrice:base00:aaaaaa>\n"
+        "color = aaaaaa\n"
+        "another_color = aaaaaa\n"
+    )
 
-    errors = templates.process_templates(colors, [str(template_file)])
-    output_file = template_file.parent / "colors"
+    colors = {"base00": "111111"}
 
+    errors = process_templates(colors, [str(f)])
     assert errors == []
-    assert output_file.exists()
-    output = output_file.read_text()
-    assert "111111" in output
-    assert "ffffff" in output
-    assert "{{base00}}" not in output
+
+    result = read(f)
+
+    assert result[0] == "// <%pyrice:base00:111111>"
+    assert result[1] == "color = 111111"
+    assert result[2] == "another_color = aaaaaa"
 
 
-def test_process_templates_missing_file(tmp_path, empty_colors):
-    missing_path = tmp_path / "nonexistent.yaml"
-    errors = templates.process_templates(empty_colors, [str(missing_path)])
+def test_process_multiple_directives_same_line(write, read):
+    f = write(
+        "test.txt",
+        "# <%pyrice:base00:aaaaaa>   <%pyrice:base05:ffffff>\n"
+        "bg = aaaaaa; fg = ffffff\n"
+    )
+
+    colors = {"base00": "111111", "base05": "222222"}
+
+    errors = process_templates(colors, [str(f)])
+    assert errors == []
+
+    out = read(f)
+    assert out[0] == "# <%pyrice:base00:111111>   <%pyrice:base05:222222>"
+    assert out[1] == "bg = 111111; fg = 222222"
+
+
+def test_process_missing_key_is_ignored(write, read):
+    f = write(
+        "test.txt",
+        "<%pyrice:base99:aaaaaa>\n"
+        "color = aaaaaa\n"
+    )
+
+    colors = {"base00": "111111"}  # no base99
+
+    process_templates(colors, [str(f)])
+    out = read(f)
+
+    assert out[0] == "<%pyrice:base99:aaaaaa>"
+    assert out[1] == "color = aaaaaa"
+
+
+def test_process_templates_missing_file(tmp_path):
+    missing = tmp_path / "missing.txt"
+    errors = process_templates({"base00": "111111"}, [str(missing)])
+
     assert len(errors) == 1
     assert "Could not find file" in errors[0]
 
 
-def test_process_templates_partial_replacement(tmp_path):
-    template_file = tmp_path / "template.conf"
-    template_file.write_text("color1={{base00}}\ncolor2={{base01}}\n")
-    colors = {"base00": "AAA000"}  # no base01
+def test_process_templates_multiple_files(write, read):
+    colors = {"base00": "000111"}
 
-    errors = templates.process_templates(colors, [str(template_file)])
+    paths = [
+        write(f"file{i}.txt", "<%pyrice:base00:aaaaaa>\n" f"set{i} = aaaaaa\n")
+        for i in range(2)
+    ]
+
+    errors = process_templates(colors, [str(p) for p in paths])
     assert errors == []
 
-    output_file = tmp_path / "conf"
-    assert output_file.exists()
-    content = output_file.read_text()
-    assert "AAA000" in content
-    assert "{{base01}}" in content  # unchanged
+    for i, p in enumerate(paths):
+        out = read(p)
+        assert out[0] == "<%pyrice:base00:000111>"
+        assert out[1] == f"set{i} = 000111"
 
 
-def test_process_templates_multiple_files(tmp_path, template_base):
-    _, colors = template_base
-    paths = []
-    for i in range(2):
-        f = tmp_path / f"template.{i}.txt"
-        f.write_text("color={{base00}}")
-        paths.append(str(f))
+def test_process_directive_without_next_line(write):
+    f = write("test.txt", "<%pyrice:base00:aaaaaa>")
 
-    errors = templates.process_templates(colors, paths)
+    colors = {"base00": "111111"}
 
+    process_templates(colors, [str(f)])
+
+    assert f.read_text() == "<%pyrice:base00:aaaaaa>"
+
+
+def test_process_color_used_multiple_times(write, read):
+    f = write(
+        "multi.txt",
+        "<%pyrice:base00:aaaaaa>\n"
+        "color1 = #aaaaaa, color2 = #bbbbbb, color3 = #aaaaaa"
+    )
+
+    colors = {"base00": "111111"}
+
+    errors = process_templates(colors, [str(f)])
     assert errors == []
-    for i in range(2):
-        out_file = tmp_path / f"{i}.txt"
-        assert out_file.exists()
-        assert out_file.read_text() == "color=111111"
+
+    lines = read(f)
+
+    assert lines[0] == "<%pyrice:base00:111111>"
+    assert lines[1] == (
+        "color1 = #111111, color2 = #bbbbbb, color3 = #111111"
+    )
