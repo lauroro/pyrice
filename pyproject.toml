@@ -1,6 +1,6 @@
 [project]
 name = "pyrice"
-version = "1.0.0"
+version = "2.0.0"
 description = "A tool to handle base16 powered ricing"
 authors = [{ name = "roro" }]
 license = { text = "GPL-3.0-or-later" }
