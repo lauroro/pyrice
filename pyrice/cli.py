@@ -12,6 +12,9 @@ from pyrice.templates import process_templates
 from pyrice.commands import execute_commands
 
 
+__version__ = "2.0.1"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="pyrice, a tool to handle your base16 powered ricing")
@@ -23,6 +26,9 @@ def main():
                         help="Preview the palette")
     parser.add_argument("-r", "--rice", action="store_true",
                         help="Perform the ricing")
+    parser.add_argument("-v", "--version", action="store_true",
+                        help="Show pyrice version")
+
     args = parser.parse_args()
 
     config_home = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
@@ -30,6 +36,10 @@ def main():
     palette_file = os.path.join(
         pyrice_dir, f"palettes/{args.palette_name}.yaml")
     config_file = os.path.join(pyrice_dir, "config.yaml")
+
+    if args.version:
+        print(__version__)
+        sys.exit(0)
 
     if args.list:
         list_palettes(os.path.join(pyrice_dir, "palettes"))
