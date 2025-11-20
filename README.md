@@ -1,5 +1,4 @@
-
-# pyrice v2
+# pyrice
 
 A simple, no-dependencies tool to handle [base16](https://github.com/chriskempson/base16) powered ricing on Linux.
 
